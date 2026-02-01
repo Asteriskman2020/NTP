@@ -382,6 +382,7 @@ void setup() {
   }
 
   oled.init();
+  oled.flipScreenVertically();
   oled.setFont(ArialMT_Plain_16);
   oled.setTextAlignment(TEXT_ALIGN_CENTER);
   oled.drawString(64, 20, "OLED13 Clock");
