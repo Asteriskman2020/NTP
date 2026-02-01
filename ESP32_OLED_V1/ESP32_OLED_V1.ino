@@ -109,7 +109,9 @@ void setup() {
   if (strlen(cfg.ssid) > 0 && connectWiFi()) {
     apMode = false;
     setupOTA();
-    configTime(cfg.tzInfo, "pool.ntp.org", "time.nist.gov");
+    configTime(0, 0, "pool.ntp.org", "time.nist.gov");
+    setenv("TZ", cfg.tzInfo, 1);
+    tzset();
     Serial.printf("[WiFi] Connected: %s\n", WiFi.localIP().toString().c_str());
 
     // MQTT
