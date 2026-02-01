@@ -22,8 +22,8 @@
 #define SCREEN_HEIGHT 64
 #define OLED_RESET    -1
 #define OLED_ADDR     0x3C
-#define OLED_SDA      21
-#define OLED_SCL      22
+#define OLED_SDA      5
+#define OLED_SCL      4
 
 // ── LED Config ──
 #define LED_PIN       2
@@ -89,10 +89,33 @@ void setup() {
   pinMode(LED_PIN, OUTPUT);
   digitalWrite(LED_PIN, LOW);
 
-  // OLED Init
+  // I2C Scan + OLED Init
   Wire.begin(OLED_SDA, OLED_SCL);
-  if (!oled.begin(SSD1306_SWITCHCAPVCC, OLED_ADDR)) {
-    Serial.println(F("[OLED] Init FAILED"));
+  delay(100);
+
+  // Scan I2C to find OLED address
+  uint8_t oledAddr = 0;
+  Serial.println(F("[I2C] Scanning..."));
+  for (uint8_t addr = 0x01; addr < 0x7F; addr++) {
+    Wire.beginTransmission(addr);
+    if (Wire.endTransmission() == 0) {
+      Serial.printf("[I2C] Found device at 0x%02X\n", addr);
+      if (addr == 0x3C || addr == 0x3D) oledAddr = addr;
+    }
+  }
+  if (oledAddr == 0) {
+    oledAddr = OLED_ADDR;
+    Serial.println(F("[I2C] No OLED found, using default 0x3C"));
+  }
+  Serial.printf("[OLED] Using address 0x%02X\n", oledAddr);
+
+  if (!oled.begin(SSD1306_SWITCHCAPVCC, oledAddr)) {
+    Serial.println(F("[OLED] Init FAILED - check wiring!"));
+    // Retry once
+    delay(500);
+    Wire.begin(OLED_SDA, OLED_SCL);
+    delay(100);
+    oled.begin(SSD1306_SWITCHCAPVCC, oledAddr);
   }
   oled.clearDisplay();
   oled.setTextColor(SSD1306_WHITE);
@@ -101,6 +124,7 @@ void setup() {
   oled.println(F("ESP32 OLED V1"));
   oled.println(F("Booting..."));
   oled.display();
+  Serial.println(F("[OLED] Display initialized"));
 
   // Load config
   loadConfig();
