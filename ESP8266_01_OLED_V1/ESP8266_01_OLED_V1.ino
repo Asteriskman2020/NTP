@@ -18,8 +18,8 @@
 #include <time.h>
 
 // ─── Pin Definitions ────────────────────────────────────────────────
-#define OLED_SDA  2   // GPIO2
-#define OLED_SCL  0   // GPIO0
+#define OLED_SDA  0   // GPIO0
+#define OLED_SCL  2   // GPIO2
 
 // ─── EEPROM Config ──────────────────────────────────────────────────
 #define EEPROM_SIZE   512
@@ -486,10 +486,22 @@ void setup() {
   delay(200);
   Serial.println("\n=== ESP01 NTP Clock V1 ===");
 
-  // OLED init
+  // I2C scan to find OLED address
   Wire.begin(OLED_SDA, OLED_SCL);
+  delay(200);
+  Serial.println("I2C scan:");
+  for (uint8_t addr = 1; addr < 127; addr++) {
+    Wire.beginTransmission(addr);
+    if (Wire.endTransmission() == 0) {
+      Serial.printf("  Found device at 0x%02X\n", addr);
+    }
+  }
+
+  // OLED init
   oled.init();
-  oled.flipScreenVertically();
+  //oled.flipScreenVertically();
+  oled.setBrightness(255);
+  oled.setContrast(255);
   oled.setFont(ArialMT_Plain_16);
   oled.setTextAlignment(TEXT_ALIGN_CENTER);
   oled.drawString(64, 20, "NTP Clock");
